@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctor's Report — HealthSense AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    @media print {
+      .navbar, .no-print, .footer { display: none !important; }
+      body { background: white !important; }
+      .report-page { box-shadow: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar no-print">
+    <div class="nav-brand">
+      <span class="brand-icon">🩺</span>
+      <span class="brand-name">HealthSense <em>AI</em></span>
+    </div>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/progress" class="nav-link">Progress</a>
+      <a href="/recommendations" class="nav-link">Recommendations</a>
+      <a href="/doctor-report" class="nav-link active">Doctor Report</a>
+    </div>
+  </nav>
+
+  <div class="no-print" style="background:#fef6fb;padding:16px 40px;border-bottom:1px solid #f0d9ea;display:flex;gap:16px;align-items:center;">
+    <span style="font-family:'DM Sans';color:#888;font-size:14px;">🖨️ This page is designed to be printed or saved as PDF</span>
+    <button onclick="window.print()" class="submit-btn" style="padding:10px 24px;font-size:14px;">Print / Save as PDF</button>
+    <a href="/recommendations" class="pill-btn ghost" style="font-size:14px;">← Back</a>
+  </div>
+
+  <div class="report-page">
+
+    <div class="report-header">
+      <div class="report-logo">
+        <div class="report-logo-icon">🩺</div>
+        <div>
+          <div class="report-logo-name">HealthSense AI</div>
+          <div class="report-logo-sub">Intelligent Health Risk Assessment System</div>
+        </div>
+      </div>
+      <div class="report-meta">
+        <div class="report-meta-row"><span>Report Type:</span> AI Health Risk Assessment</div>
+        <div class="report-meta-row"><span>Generated:</span> <span id="reportDate"></span></div>
+        <div class="report-meta-row"><span>Model:</span> Multilayer Perceptron (MLP)</div>
+        <div class="report-meta-row"><span>Status:</span> <span class="risk-inline {{ result.risk_color }}">{{ result.risk_level }} Risk</span></div>
+      </div>
+    </div>
+
+    <div class="report-divider"></div>
+
+    <div class="report-risk-box {{ result.risk_color }}">
+      <div class="rrb-left">
+        <div class="rrb-title">Predicted Health Risk Level</div>
+        <div class="rrb-level">{{ result.risk_level }}</div>
+        <div class="rrb-conf">Neural Network Confidence: {{ result.confidence }}%</div>
+      </div>
+      <div class="rrb-right">
+        <div class="rrb-desc">
+          {% if result.risk_level == 'Low' %}
+          The patient's health parameters are within or near normal ranges. Preventive care and healthy habits are recommended to maintain this status.
+          {% elif result.risk_level == 'Medium' %}
+          The patient shows moderate risk indicators. Lifestyle modifications and regular monitoring are strongly advised. Specialist consultation may be beneficial.
+          {% else %}
+          The patient exhibits high-risk health indicators across multiple parameters. Immediate medical evaluation, further diagnostic testing, and therapeutic intervention are recommended.
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <h2 class="report-section-title">Patient Health Parameters</h2>
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th>Parameter</th>
+          <th>Patient Value</th>
+          <th>Normal Range</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Age</td>
+          <td>{{ patient.age }} years</td>
+          <td>—</td>
+          <td>{% if patient.age|int > 60 %}<span class="status-tag orange">Elevated Risk Age</span>{% else %}<span class="status-tag green">Normal</span>{% endif %}</td>
+        </tr>
+        <tr>
+          <td>BMI (Body Mass Index)</td>
+          <td>{{ patient.bmi }} kg/m²</td>
+          <td>18.5 – 24.9</td>
+          <td>
+            {% if patient.bmi|float < 18.5 %}<span class="status-tag blue">Underweight</span>
+            {% elif patient.bmi|float <= 24.9 %}<span class="status-tag green">Normal</span>
+            {% elif patient.bmi|float <= 29.9 %}<span class="status-tag orange">Overweight</span>
+            {% else %}<span class="status-tag red">Obese</span>{% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td>Blood Pressure (Systolic)</td>
+          <td>{{ patient.blood_pressure }} mmHg</td>
+          <td>&lt; 120 mmHg</td>
+          <td>
+            {% if patient.blood_pressure|int < 120 %}<span class="status-tag green">Normal</span>
+            {% elif patient.blood_pressure|int < 130 %}<span class="status-tag blue">Elevated</span>
+            {% elif patient.blood_pressure|int < 160 %}<span class="status-tag orange">High</span>
+            {% else %}<span class="status-tag red">Critical</span>{% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td>Total Cholesterol</td>
+          <td>{{ patient.cholesterol }} mg/dL</td>
+          <td>&lt; 200 mg/dL</td>
+          <td>
+            {% if patient.cholesterol|int < 200 %}<span class="status-tag green">Desirable</span>
+            {% elif patient.cholesterol|int < 240 %}<span class="status-tag orange">Borderline High</span>
+            {% else %}<span class="status-tag red">High</span>{% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td>Fasting Blood Sugar</td>
+          <td>{{ patient.blood_sugar }} mg/dL</td>
+          <td>70 – 99 mg/dL</td>
+          <td>
+            {% if patient.blood_sugar|int <= 99 %}<span class="status-tag green">Normal</span>
+            {% elif patient.blood_sugar|int <= 125 %}<span class="status-tag orange">Pre-diabetic</span>
+            {% else %}<span class="status-tag red">Diabetic Range</span>{% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td>Physical Activity</td>
+          <td>{{ patient.exercise_hours }} hrs/week</td>
+          <td>≥ 5 hrs/week</td>
+          <td>
+            {% if patient.exercise_hours|float >= 5 %}<span class="status-tag green">Adequate</span>
+            {% elif patient.exercise_hours|float >= 2 %}<span class="status-tag orange">Insufficient</span>
+            {% else %}<span class="status-tag red">Sedentary</span>{% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td>Sleep Duration</td>
+          <td>{{ patient.sleep_hours }} hrs/night</td>
+          <td>7 – 9 hrs/night</td>
+          <td>
+            {% if patient.sleep_hours|float >= 7 and patient.sleep_hours|float <= 9 %}<span class="status-tag green">Adequate</span>
+            {% elif patient.sleep_hours|float >= 6 %}<span class="status-tag orange">Slightly Low</span>
+            {% else %}<span class="status-tag red">Insufficient</span>{% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td>Smoking Status</td>
+          <td>{{ "Yes" if patient.smoking == "1" else "No" }}</td>
+          <td>Non-smoker</td>
+          <td>{% if patient.smoking == "1" %}<span class="status-tag red">High Risk Factor</span>{% else %}<span class="status-tag green">Non-Smoker</span>{% endif %}</td>
+        </tr>
+        <tr>
+          <td>Alcohol Consumption</td>
+          <td>{{ "Yes" if patient.alcohol == "1" else "No" }}</td>
+          <td>Non/Moderate</td>
+          <td>{% if patient.alcohol == "1" %}<span class="status-tag orange">Risk Factor</span>{% else %}<span class="status-tag green">None</span>{% endif %}</td>
+        </tr>
+        <tr>
+          <td>Family History of Disease</td>
+          <td>{{ "Yes" if patient.family_history == "1" else "No" }}</td>
+          <td>No family history</td>
+          <td>{% if patient.family_history == "1" %}<span class="status-tag orange">Genetic Risk</span>{% else %}<span class="status-tag green">None</span>{% endif %}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 class="report-section-title">AI-Detected Clinical Alerts</h2>
+    <div class="report-alerts">
+      {% for w in result.warnings %}
+      <div class="report-alert-item">{{ w }}</div>
+      {% endfor %}
+    </div>
+
+    <h2 class="report-section-title">Clinical Recommendations</h2>
+    <ol class="report-reco-list">
+      {% for rec in result.recommendations %}
+      <li>{{ rec }}</li>
+      {% endfor %}
+    </ol>
+
+    {% if result.fired_rules %}
+    <h2 class="report-section-title">Rule-Based Inference Results</h2>
+    <p class="report-note">The following rules were triggered by the forward chaining knowledge base engine:</p>
+    <div class="report-rules">
+      {% for r in result.fired_rules %}
+      <span class="report-rule-chip">{{ r }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="report-divider" style="margin-top:40px;"></div>
+    <div class="report-disclaimer">
+      <strong>⚠️ Important Disclaimer:</strong> This report was generated by an AI-based system (HealthSense AI) using a Multilayer Perceptron neural network and a rule-based knowledge base engine. It is intended for educational and informational purposes only. This report does not constitute a medical diagnosis and should not replace consultation with a qualified healthcare professional. All findings should be verified through appropriate clinical examination and diagnostic testing.
+    </div>
+
+    <div class="report-footer-bar">
+      <span>HealthSense AI — AI Health Risk Prediction System</span>
+      <span id="footerDate"></span>
+    </div>
+
+  </div>
+
+  <div class="no-print" style="padding:24px;text-align:center;">
+    <a href="/" class="pill-btn ghost">← Back to Home</a>
+  </div>
+
+  <script>
+    const now = new Date();
+    const fmt = now.toLocaleDateString('en-IN', { year:'numeric', month:'long', day:'numeric' });
+    document.getElementById('reportDate').textContent = fmt;
+    document.getElementById('footerDate').textContent = fmt;
+  </script>
+
+  <script id="assistantReportData" type="application/json">
+  {
+    "risk_level": "{{ result.risk_level }}",
+    "confidence": {{ result.confidence }},
+    "age": {{ patient.age }},
+    "bmi": {{ patient.bmi }},
+    "blood_pressure": {{ patient.blood_pressure }},
+    "cholesterol": {{ patient.cholesterol }},
+    "blood_sugar": {{ patient.blood_sugar }},
+    "exercise_hours": {{ patient.exercise_hours }},
+    "sleep_hours": {{ patient.sleep_hours }},
+    "smoking": {{ patient.smoking }},
+    "alcohol": {{ patient.alcohol }},
+    "family_history": {{ patient.family_history }},
+    "warnings": {{ result.warnings | tojson }},
+    "recommendations": {{ result.recommendations | tojson }}
+  }
+  </script>
+  <script src="/static/assistant.js"></script>
+
+</body>
+</html>

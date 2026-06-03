@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Risk Assessment — HealthSense AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-brand">
+      <span class="brand-icon">🩺</span>
+      <span class="brand-name">HealthSense <em>AI</em></span>
+    </div>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/progress" class="nav-link">Progress</a>
+      <a href="/recommendations" class="nav-link">Recommendations</a>
+      <a href="/doctor-report" class="nav-link">Doctor Report</a>
+    </div>
+  </nav>
+
+  <section class="result-hero {{ result.risk_color }}">
+    <div class="hero-blob blob1"></div>
+    <div class="hero-blob blob2"></div>
+    <div class="result-hero-content">
+      <div class="result-badge">Assessment Complete</div>
+      <h1 class="result-title">
+        Your Risk Level is
+        <span class="risk-label-big">{{ result.risk_level }}</span>
+      </h1>
+      <p class="result-confidence">Neural Network Confidence: <strong>{{ result.confidence }}%</strong></p>
+      <div class="result-nav-btns">
+        <a href="/recommendations" class="pill-btn primary">💡 View Recommendations</a>
+        <a href="/doctor-report" class="pill-btn secondary">🖨️ Doctor's Report</a>
+        <a href="/" class="pill-btn ghost">← Re-assess</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="charts-section">
+    <div class="section-inner">
+
+      <h2 class="section-title">Your Health Overview</h2>
+
+      <div class="charts-grid">
+
+        <div class="chart-card wide">
+          <div class="chart-card-header">
+            <h3>🎯 Risk Summary</h3>
+            <p>Overall assessment from neural network prediction</p>
+          </div>
+          <div class="risk-summary-card">
+            <div class="risk-summary-left {{ result.risk_color }}">
+              <div class="risk-summary-icon">
+                {% if result.risk_level == 'Low' %}🟢
+                {% elif result.risk_level == 'Medium' %}🟡
+                {% else %}🔴{% endif %}
+              </div>
+              <div class="risk-summary-level">{{ result.risk_level }}</div>
+              <div class="risk-summary-sublabel">Risk Level</div>
+            </div>
+            <div class="risk-summary-right">
+              <div class="risk-meter-row">
+                <span class="risk-meter-label">Low</span>
+                <div class="risk-meter-track">
+                  <div class="risk-meter-fill {{ result.risk_color }}"
+                       style="width:{{ result.confidence }}%"></div>
+                  <div class="risk-meter-marker" style="left:33%"></div>
+                  <div class="risk-meter-marker" style="left:66%"></div>
+                </div>
+                <span class="risk-meter-label">High</span>
+              </div>
+              <div class="risk-stats-row">
+                <div class="risk-stat-box">
+                  <span class="risk-stat-num">{{ result.confidence }}%</span>
+                  <span class="risk-stat-label">Confidence</span>
+                </div>
+                <div class="risk-stat-box">
+                  <span class="risk-stat-num">{{ result.fired_rules | length }}</span>
+                  <span class="risk-stat-label">Rules Triggered</span>
+                </div>
+                <div class="risk-stat-box">
+                  <span class="risk-stat-num">{{ result.warnings | length }}</span>
+                  <span class="risk-stat-label">Warnings</span>
+                </div>
+                <div class="risk-stat-box">
+                  <span class="risk-stat-num">{{ result.recommendations | length }}</span>
+                  <span class="risk-stat-label">Recommendations</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <h3>🏅 Health Score Card</h3>
+            <p>Your score out of 10 for each parameter</p>
+          </div>
+          <div id="scoreCard" class="score-card"></div>
+        </div>
+
+        <div class="chart-card wide">
+          <div class="chart-card-header">
+            <h3>📊 Parameters vs Normal Range</h3>
+            <p>How your values compare to healthy benchmarks</p>
+          </div>
+          <canvas id="barChart"></canvas>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <h3>⚖️ BMI Analysis</h3>
+            <p>Body Mass Index breakdown</p>
+          </div>
+          <div class="bmi-visual">
+            <div class="bmi-scale">
+              <div class="bmi-bar">
+                <div class="bmi-segment underweight">Underweight<br><small>&lt;18.5</small></div>
+                <div class="bmi-segment normal">Normal<br><small>18.5–24.9</small></div>
+                <div class="bmi-segment overweight">Overweight<br><small>25–29.9</small></div>
+                <div class="bmi-segment obese">Obese<br><small>30+</small></div>
+              </div>
+              <div class="bmi-pointer-wrap">
+                <div class="bmi-pointer" id="bmiPointer">▲</div>
+              </div>
+            </div>
+            <div class="bmi-value-display">
+              Your BMI: <strong id="bmiValue">—</strong>
+              <span id="bmiCategory" class="bmi-cat-tag"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <h3>📈 Model Training Loss</h3>
+            <p>Neural network learning curve</p>
+          </div>
+          <img src="/static/loss_curve.png" alt="Loss Curve" class="loss-img">
+        </div>
+
+      </div>
+
+      <div class="warnings-section">
+        <h3>⚠️ AI-Detected Health Warnings</h3>
+        <div class="warnings-grid">
+          {% for w in result.warnings %}
+          <div class="warning-card">{{ w }}</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      {% if result.fired_rules %}
+      <div class="rules-section">
+        <h3>🔗 Triggered Rules <span class="rules-subtitle">(Forward Chaining Knowledge Base)</span></h3>
+        <div class="rules-chips">
+          {% for r in result.fired_rules %}
+          <span class="rule-chip">{{ r }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>HealthSense AI &nbsp;|&nbsp; For educational purposes only &nbsp;|&nbsp; Always consult a qualified doctor</p>
+  </footer>
+
+  <script>
+    const patientData = {
+      bmi: {{ result.patient_data.bmi }},
+      blood_pressure: {{ result.patient_data.blood_pressure }},
+      cholesterol: {{ result.patient_data.cholesterol }},
+      blood_sugar: {{ result.patient_data.blood_sugar }},
+      exercise_hours: {{ result.patient_data.exercise_hours }},
+      sleep_hours: {{ result.patient_data.sleep_hours }},
+      confidence: {{ result.confidence }},
+      risk_level: "{{ result.risk_level }}"
+    };
+
+    // HEALTH SCORE CARD
+    function healthScore(param, value) {
+      let score, status;
+      switch(param) {
+        case 'BMI':
+          score = value < 18.5 ? 5 : value <= 24.9 ? 10 : value <= 29.9 ? 5 : 2;
+          break;
+        case 'Blood Pressure':
+          score = value < 120 ? 10 : value < 130 ? 7 : value < 160 ? 4 : 1;
+          break;
+        case 'Cholesterol':
+          score = value < 170 ? 10 : value < 200 ? 7 : value < 240 ? 4 : 1;
+          break;
+        case 'Blood Sugar':
+          score = value <= 99 ? 10 : value <= 125 ? 5 : 2;
+          break;
+        case 'Exercise':
+          score = value >= 7 ? 10 : value >= 5 ? 8 : value >= 3 ? 5 : value >= 1 ? 3 : 1;
+          break;
+        case 'Sleep':
+          score = value >= 7 && value <= 9 ? 10 : value >= 6 ? 7 : value >= 5 ? 4 : 2;
+          break;
+      }
+      status = score >= 8 ? 'good' : score >= 5 ? 'ok' : 'bad';
+      return { score, status };
+    }
+
+    const scoreParams = [
+      { label: 'BMI',            value: patientData.bmi,           unit: 'kg/m²' },
+      { label: 'Blood Pressure', value: patientData.blood_pressure, unit: 'mmHg' },
+      { label: 'Cholesterol',    value: patientData.cholesterol,    unit: 'mg/dL' },
+      { label: 'Blood Sugar',    value: patientData.blood_sugar,    unit: 'mg/dL' },
+      { label: 'Exercise',       value: patientData.exercise_hours, unit: 'hrs/wk' },
+      { label: 'Sleep',          value: patientData.sleep_hours,    unit: 'hrs/night' },
+    ];
+
+    const scoreCard = document.getElementById('scoreCard');
+    scoreParams.forEach(p => {
+      const { score, status } = healthScore(p.label, p.value);
+      const emoji = status === 'good' ? '✅' : status === 'ok' ? '⚠️' : '❌';
+      scoreCard.innerHTML += `
+        <div class="score-row">
+          <div class="score-row-top">
+            <span class="score-label">${emoji} ${p.label} <span style="font-weight:400;color:#aaa;font-size:0.78rem">(${p.value} ${p.unit})</span></span>
+            <span class="score-num" style="color:${status==='good'?'#2d8a50':status==='ok'?'#c17020':'#c0392b'}">${score}/10</span>
+          </div>
+          <div class="score-bar-bg">
+            <div class="score-bar-fill score-${status}" style="width:${score*10}%"></div>
+          </div>
+        </div>
+      `;
+    });
+
+    // BAR CHART
+    const barCtx = document.getElementById('barChart').getContext('2d');
+    new Chart(barCtx, {
+      type: 'bar',
+      data: {
+        labels: ['BMI', 'Blood Pressure', 'Cholesterol', 'Blood Sugar', 'Exercise (hrs/wk)', 'Sleep (hrs/night)'],
+        datasets: [
+          {
+            label: 'Your Value',
+            data: [patientData.bmi, patientData.blood_pressure, patientData.cholesterol, patientData.blood_sugar, patientData.exercise_hours, patientData.sleep_hours],
+            backgroundColor: ['rgba(255,182,193,0.85)','rgba(173,216,230,0.85)','rgba(216,191,216,0.85)','rgba(255,218,185,0.85)','rgba(152,251,152,0.85)','rgba(189,252,201,0.85)'],
+            borderRadius: 8, borderWidth: 0
+          },
+          {
+            label: 'Healthy Benchmark',
+            data: [22, 110, 175, 85, 7, 8],
+            backgroundColor: 'rgba(0,0,0,0.08)',
+            borderRadius: 8, borderWidth: 0
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom', labels: { font: { family: 'DM Sans', size: 12 } } } },
+        scales: {
+          y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { family: 'DM Sans' } } },
+          x: { grid: { display: false }, ticks: { font: { family: 'DM Sans', size: 11 } } }
+        }
+      }
+    });
+
+    // BMI POINTER
+    const bmi = patientData.bmi;
+    document.getElementById('bmiValue').textContent = bmi;
+    let pct = 0, cat = '', catClass = '';
+    if (bmi < 18.5)      { pct = (bmi / 18.5) * 25;                 cat = 'Underweight'; catClass = 'tag-blue'; }
+    else if (bmi < 25)   { pct = 25 + ((bmi-18.5)/6.4)*25;          cat = 'Normal';      catClass = 'tag-green'; }
+    else if (bmi < 30)   { pct = 50 + ((bmi-25)/5)*25;              cat = 'Overweight';  catClass = 'tag-orange'; }
+    else                 { pct = 75 + Math.min(((bmi-30)/15)*25,25); cat = 'Obese';       catClass = 'tag-red'; }
+    document.getElementById('bmiPointer').style.left = Math.min(pct, 98) + '%';
+    const catEl = document.getElementById('bmiCategory');
+    catEl.textContent = cat;
+    catEl.className = 'bmi-cat-tag ' + catClass;
+  </script>
+
+  <script id="assistantReportData" type="application/json">
+  {
+    "risk_level": "{{ result.risk_level }}",
+    "confidence": {{ result.confidence }},
+    "age": {{ result.patient_data.age }},
+    "bmi": {{ result.patient_data.bmi }},
+    "blood_pressure": {{ result.patient_data.blood_pressure }},
+    "cholesterol": {{ result.patient_data.cholesterol }},
+    "blood_sugar": {{ result.patient_data.blood_sugar }},
+    "exercise_hours": {{ result.patient_data.exercise_hours }},
+    "sleep_hours": {{ result.patient_data.sleep_hours }},
+    "smoking": {{ result.patient_data.smoking }},
+    "alcohol": {{ result.patient_data.alcohol }},
+    "family_history": {{ result.patient_data.family_history }},
+    "warnings": {{ result.warnings | tojson }},
+    "recommendations": {{ result.recommendations | tojson }}
+  }
+  </script>
+  
+  <script src="/static/assistant.js"></script>
+  <script src="/static/history.js"></script>
+  <script>
+    // Force save immediately since load event already fired
+    setTimeout(function() {
+      var reportEl = document.getElementById('assistantReportData');
+      if (!reportEl) return;
+      try {
+        var data = JSON.parse(reportEl.textContent);
+        if (!data.risk_level) return;
+        var entry = {
+          timestamp: new Date().toISOString(),
+          risk_level: data.risk_level,
+          confidence: data.confidence,
+          age: data.age,
+          bmi: data.bmi,
+          blood_pressure: data.blood_pressure,
+          cholesterol: data.cholesterol,
+          blood_sugar: data.blood_sugar,
+          exercise_hours: data.exercise_hours,
+          sleep_hours: data.sleep_hours,
+          smoking: data.smoking,
+          alcohol: data.alcohol,
+          family_history: data.family_history
+        };
+        var history = [];
+        try { history = JSON.parse(localStorage.getItem('healthsense_history')) || []; } catch(e) {}
+        var last = history[history.length - 1];
+        if (last) {
+          var diff = new Date() - new Date(last.timestamp);
+          if (diff < 10000 && last.bmi == entry.bmi && last.blood_pressure == entry.blood_pressure && last.risk_level == entry.risk_level) return;
+        }
+        history.push(entry);
+        if (history.length > 50) history = history.slice(-50);
+        localStorage.setItem('healthsense_history', JSON.stringify(history));
+        console.log('Saved! Total entries:', history.length);
+      } catch(e) { console.log('Error:', e); }
+    }, 500);
+  </script>
+</body>
+</html>
+
