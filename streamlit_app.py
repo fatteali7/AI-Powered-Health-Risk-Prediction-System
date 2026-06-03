@@ -55,31 +55,65 @@ if submitted:
         result = agent.decide_and_act(form_data)
         
     st.divider()
-    st.header("📊 Your Results")
+    
+    # Create Tabs to mimic the rich multi-page experience of the previous app
+    tab1, tab2, tab3 = st.tabs(["📊 Overview", "💡 Recommendations", "🩺 Doctor Report"])
     
     risk_level = result['risk_level']
     conf = result['confidence']
     color = result['risk_color']
     
-    # Using Streamlit components to mimic the look
-    st.metric(label="Predicted Risk Level", value=risk_level, delta=f"{conf}% Confidence")
-    
-    if color == 'green':
-        st.success("Great job! You are at Low Risk. Keep up the good habits.")
-    elif color == 'orange':
-        st.warning("You are at Medium Risk. Please review the recommendations below.")
-    else:
-        st.error("You are at High Risk! Please consult a doctor immediately.")
+    with tab1:
+        st.markdown("<br>", unsafe_allow_html=True)
+        # Custom HTML for big bold label
+        st.markdown(f"<h1 style='text-align: center; color: #FF2A75; font-size: 3.5rem;'><i>{risk_level} Risk</i></h1>", unsafe_allow_html=True)
         
-    st.divider()
-    st.subheader("💡 Recommendations")
-    
-    if result.get('warnings'):
-        for warning in result['warnings']:
-            st.error(warning)
+        st.markdown("<br>", unsafe_allow_html=True)
+        cols = st.columns([1, 2, 1])
+        with cols[1]:
+            st.metric(label="AI Confidence Level", value=f"{conf}%", delta="High Precision")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        if color == 'green':
+            st.success("✅ Great job! You are at Low Risk. Keep up the good habits.")
+        elif color == 'orange':
+            st.warning("⚠️ You are at Medium Risk. Please review the actionable insights.")
+        else:
+            st.error("🚨 You are at High Risk! Please consult a doctor immediately.")
             
-    for reco in result.get('recommendations', []):
-        st.info(f"👉 {reco}")
+    with tab2:
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.subheader("Actionable Insights")
         
-    with st.expander("Show Doctor's Report Data"):
-        st.json(result)
+        if result.get('warnings'):
+            for warning in result['warnings']:
+                st.error(f"⚠️ {warning}")
+                
+        if result.get('recommendations'):
+            for i, reco in enumerate(result['recommendations'], 1):
+                st.info(f"**{i}.** {reco}")
+        else:
+            st.info("No specific recommendations at this time. Keep up the good work!")
+            
+    with tab3:
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.subheader("Detailed Clinical Report")
+        
+        import pandas as pd
+        report_data = {
+            "Vital Sign": ["Age", "BMI", "Blood Pressure", "Cholesterol", "Blood Sugar", "Exercise Hours", "Sleep Hours", "Smoking", "Alcohol", "Family History"],
+            "Patient Value": [
+                age, bmi, blood_pressure, cholesterol, blood_sugar, 
+                exercise_hours, sleep_hours, 
+                "Yes" if smoking else "No", 
+                "Yes" if alcohol else "No", 
+                "Yes" if family_history else "No"
+            ],
+            "Healthy Target": [
+                "-", "18.5 - 24.9", "< 120", "< 200", "< 100", "> 3", "7 - 9", "No", "No", "-"
+            ]
+        }
+        df = pd.DataFrame(report_data)
+        st.table(df)
+        
+        st.caption(f"Knowledge Base Rules Fired: {', '.join(result.get('fired_rules', [])) if result.get('fired_rules') else 'None'}")
