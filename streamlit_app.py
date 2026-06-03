@@ -83,12 +83,19 @@ if submitted:
             
     with tab2:
         st.markdown("<br>", unsafe_allow_html=True)
-        st.subheader("Actionable Insights")
         
+        st.subheader("🚨 Detected Health Risks")
         if result.get('warnings'):
             for warning in result['warnings']:
-                st.error(f"⚠️ {warning}")
-                
+                # The warning string already has an emoji from the backend, so we just print it
+                st.error(f"{warning}")
+        else:
+            st.success("✅ No critical health risks detected.")
+            
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.subheader("💡 Suggestions to Overcome Risks")
+        st.markdown("Here is your personalized action plan to improve your health and mitigate the risks above:")
+        
         if result.get('recommendations'):
             for i, reco in enumerate(result['recommendations'], 1):
                 st.info(f"**{i}.** {reco}")
