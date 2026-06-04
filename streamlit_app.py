@@ -102,6 +102,14 @@ if submitted:
         else:
             st.info("No specific recommendations at this time. Keep up the good work!")
             
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.subheader("🥗 Recommended Diet Plan")
+        if result.get('diet_plans'):
+            for diet in result['diet_plans']:
+                st.success(f"{diet}")
+        else:
+            st.success("🍏 Maintain your current balanced diet!")
+            
     with tab3:
         st.markdown("<br>", unsafe_allow_html=True)
         st.subheader("Detailed Clinical Report")

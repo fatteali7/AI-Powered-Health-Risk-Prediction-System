@@ -68,7 +68,7 @@ class HealthRiskAgent:
             'alcohol':        int(form_data['alcohol']),
             'sleep_hours':    float(form_data['sleep_hours']),
         })
-        warnings, recommendations = self.kb.forward_chain()
+        warnings, recommendations, diet_plans = self.kb.forward_chain()
 
         return {
             'risk_level':      self.risk_labels[risk_class],
@@ -76,6 +76,7 @@ class HealthRiskAgent:
             'confidence':      round(confidence, 2),
             'warnings':        warnings,
             'recommendations': recommendations,
+            'diet_plans':      diet_plans,
             'fired_rules':     self.kb.fired_rules,
             'patient_data':    form_data   # passed for charts & report
         }
